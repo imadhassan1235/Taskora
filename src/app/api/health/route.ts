@@ -14,8 +14,9 @@ export async function GET() {
         storage: {
           totalRecords: storage.totalRecords,
           type: 'local-json',
+          persistent: false,
         },
-        environment: process.env.NODE_ENV,
+        environment: process.env.VERCEL ? 'vercel' : process.env.NODE_ENV,
       },
     });
   } catch {

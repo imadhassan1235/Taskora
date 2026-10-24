@@ -24,15 +24,27 @@ const navItems = [
   { href: '/settings', label: 'Settings & Help', icon: Settings },
 ];
 
+type HealthResponse = {
+  success?: boolean;
+  data?: {
+    status?: string;
+    storage?: { type?: string };
+  };
+};
+
 function AiStatusDot() {
   const [status, setStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+  const [storageType, setStorageType] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch('/api/health')
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setStatus(d.success ? 'ok' : 'error');
+      .then(async (r) => {
+        const data = await r.json() as HealthResponse;
+        if (!cancelled) {
+          setStatus(r.ok && data.success ? 'ok' : 'error');
+          setStorageType(data.data?.storage?.type ?? null);
+        }
       })
       .catch(() => {
         if (!cancelled) setStatus('error');
@@ -48,14 +60,16 @@ function AiStatusDot() {
 
   const labels = {
     checking: 'Checking...',
-    ok: 'AI Connected',
-    error: 'Not Connected',
+    ok: 'App Online',
+    error: 'App Offline',
   };
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
       <span className={`dot ${colors[status]}`} />
-      <span style={{ fontSize: '0.75rem', color: '#71717A' }}>{labels[status]}</span>
+      <span style={{ fontSize: '0.75rem', color: '#71717A' }}>
+        {labels[status]}{status === 'ok' && storageType === 'local-json' ? ' · Local storage' : ''}
+      </span>
     </div>
   );
 }
@@ -112,7 +126,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <div className="sidebar-footer">
         <AiStatusDot />
         <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: '#52525B' }}>
-          Local JSON storage · MVP v1.0
+          {storageType === 'local-json' ? 'Local JSON storage · MVP v1.0' : 'Taskora · MVP v1.0'}
         </div>
       </div>
     </>
