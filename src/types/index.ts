@@ -3,6 +3,7 @@
 export type Language = 'auto' | 'english' | 'urdu' | 'roman-urdu';
 
 export type RecordStatus = 'draft' | 'saved' | 'archived';
+export type BusinessTransactionType = 'sale' | 'purchase' | 'other';
 
 export interface ExtractedDraft {
   customer: string | null;
@@ -21,6 +22,9 @@ export interface ExtractedDraft {
 
 export interface BusinessRecord {
   id: string;
+  transactionType?: BusinessTransactionType;
+  amountPaid?: number | null;
+  quantity?: number | null;
   customer: string | null;
   task: string | null;
   amount: number | null;

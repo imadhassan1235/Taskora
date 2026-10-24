@@ -21,6 +21,9 @@ export type ExtractedDraftZod = z.infer<typeof ExtractedDraftSchema>;
 // Schema for saving a record
 export const BusinessRecordSchema = z.object({
   id: z.string().min(1),
+  transactionType: z.enum(['sale', 'purchase', 'other']).optional(),
+  amountPaid: z.number().nonnegative().nullable().optional(),
+  quantity: z.number().nonnegative().nullable().optional(),
   customer: z.string().nullable(),
   task: z.string().nullable(),
   amount: z.number().nullable(),
@@ -49,6 +52,9 @@ export const ExtractRequestSchema = z.object({
 // Schema for save request from client
 export const SaveRequestSchema = z.object({
   draft: z.object({
+    transactionType: z.enum(['sale', 'purchase', 'other']).optional(),
+    amountPaid: z.number().nonnegative().nullable().optional(),
+    quantity: z.number().nonnegative().nullable().optional(),
     customer: z.string().nullable(),
     task: z.string().nullable(),
     amount: z.number().nullable(),
@@ -66,6 +72,9 @@ export const SaveRequestSchema = z.object({
 
 // Schema for patch request
 export const PatchRecordSchema = z.object({
+  transactionType: z.enum(['sale', 'purchase', 'other']).optional(),
+  amountPaid: z.number().nonnegative().nullable().optional(),
+  quantity: z.number().nonnegative().nullable().optional(),
   customer: z.string().nullable().optional(),
   task: z.string().nullable().optional(),
   amount: z.number().nullable().optional(),

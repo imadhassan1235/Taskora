@@ -62,6 +62,9 @@ function EditModal({ record, onClose, onSave }: EditModalProps) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          transactionType: values.transactionType ?? 'other',
+          amountPaid: values.amountPaid ?? 0,
+          quantity: values.quantity ?? null,
           customer: values.customer,
           task: values.task,
           amount: values.amount,
@@ -111,10 +114,25 @@ function EditModal({ record, onClose, onSave }: EditModalProps) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label className="form-label" htmlFor="edit-transactionType">Record Type</label>
+            <select
+              id="edit-transactionType"
+              className="form-input form-select"
+              value={values.transactionType ?? 'other'}
+              onChange={(e) => change('transactionType', e.target.value as NonNullable<BusinessRecord['transactionType']>)}
+            >
+              <option value="other">Other / Service</option>
+              <option value="sale">Sale</option>
+              <option value="purchase">Bulk Purchase / Stock In</option>
+            </select>
+          </div>
           {[
             { key: 'customer', label: 'Customer', type: 'text' },
             { key: 'task', label: 'Task / Work', type: 'text' },
-            { key: 'amount', label: 'Amount', type: 'number' },
+            { key: 'amount', label: 'Total Amount', type: 'number' },
+            { key: 'amountPaid', label: 'Amount Received / Paid', type: 'number' },
+            { key: 'quantity', label: 'Quantity Sold / Purchased', type: 'number' },
             { key: 'currency', label: 'Currency', type: 'text' },
             { key: 'dueDateRaw', label: 'Due Date (Original Text)', type: 'text' },
             { key: 'dueDate', label: 'Due Date (ISO)', type: 'date' },
@@ -126,10 +144,10 @@ function EditModal({ record, onClose, onSave }: EditModalProps) {
                 id={`edit-${key}`}
                 type={type}
                 className="form-input"
-                value={values[key as keyof BusinessRecord] !== null ? String(values[key as keyof BusinessRecord]) : ''}
-                onChange={(e) =>
-                  change(key, key === 'amount' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value || null)
-                }
+                value={values[key as keyof BusinessRecord] !== null && values[key as keyof BusinessRecord] !== undefined ? String(values[key as keyof BusinessRecord]) : ''}
+                min={type === 'number' ? 0 : undefined}
+                step={type === 'number' ? 'any' : undefined}
+                onChange={(e) => change(key, type === 'number' ? (e.target.value === '' ? null : Number(e.target.value)) : e.target.value || null)}
               />
             </div>
           ))}
@@ -383,6 +401,11 @@ export default function RecordsPage() {
                       </span>
                       <ConfidenceBadge confidence={record.confidence} />
                       <span className="badge badge-gray">{record.language}</span>
+                      {(record.transactionType ?? 'other') !== 'other' && (
+                        <span className={`badge ${record.transactionType === 'sale' ? 'badge-green' : 'badge-yellow'}`}>
+                          {record.transactionType === 'sale' ? 'Sale' : 'Bulk Purchase'}
+                        </span>
+                      )}
                     </div>
                     <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                       {record.task ?? <span style={{ fontStyle: 'italic' }}>No task description</span>}
@@ -393,6 +416,14 @@ export default function RecordsPage() {
                           <DollarSign size={13} />
                           {formatAmount(record.amount, record.currency)}
                         </span>
+                      )}
+                      {(record.transactionType ?? 'other') !== 'other' && (
+                        <span style={{ color: 'var(--text-secondary)' }}>
+                          Received / paid: {formatAmount(record.amountPaid ?? 0, record.currency)}
+                        </span>
+                      )}
+                      {record.quantity !== null && record.quantity !== undefined && (
+                        <span style={{ color: 'var(--text-secondary)' }}>Qty: {record.quantity.toLocaleString()}</span>
                       )}
                       {(record.dueDate || record.dueDateRaw) && (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-secondary)' }}>
@@ -458,6 +489,12 @@ export default function RecordsPage() {
                         { label: 'ID', value: record.id.slice(0, 8) + '...' },
                         { label: 'Language', value: record.language },
                         { label: 'Confidence', value: record.confidence },
+                        { label: 'Type', value: record.transactionType ?? 'other' },
+                        ...(record.transactionType && record.transactionType !== 'other' ? [
+                          { label: 'Amount Paid / Received', value: formatAmount(record.amountPaid ?? 0, record.currency) },
+                          { label: 'Pending', value: formatAmount(Math.max((record.amount ?? 0) - (record.amountPaid ?? 0), 0), record.currency) },
+                        ] : []),
+                        ...(record.quantity !== null && record.quantity !== undefined ? [{ label: 'Quantity', value: record.quantity.toLocaleString() }] : []),
                         { label: 'Updated', value: format(new Date(record.updatedAt), 'MMM d, yyyy HH:mm') },
                         ...(record.notes ? [{ label: 'Notes', value: record.notes }] : []),
                         ...(record.uncertain?.length ? [{ label: 'Uncertain Fields', value: record.uncertain.join(', ') }] : []),

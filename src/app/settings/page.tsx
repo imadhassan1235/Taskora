@@ -73,6 +73,11 @@ const FAQ_ITEMS = [
       'Create a file called <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">.env.local</code> in the root of the taskora project folder. Add this line:<br/><br/><code style="background:#F4F4F5;padding:8px 12px;border-radius:6px;display:block;font-family:monospace">GEMINI_API_KEY=your_api_key_here</code><br/>Then restart the development server. Get your API key from <a href="https://aistudio.google.com" target="_blank" style="color:var(--primary);text-decoration:underline">Google AI Studio</a>.',
   },
   {
+    question: 'The API key works locally but not on Vercel',
+    answer:
+      'Local <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">.env.local</code> is not uploaded to Vercel. In your Vercel project, open <strong>Settings → Environment Variables</strong>, add <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">GEMINI_API_KEY</code> with your Google AI Studio key, and select the environment(s) you deploy to (Production, and Preview if needed). Do not prefix it with <code>NEXT_PUBLIC_</code>. Save, then redeploy so the new variable is available to the server. In the deployed app, open Settings and click <strong>Test AI Connection</strong>. If the test reports a model error, check that <code>GEMMA_MODEL</code> is set to a model available to your API key, or remove it to use the app default.',
+  },
+  {
     question: 'Which model should I use?',
     answer:
       'The default model is <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">gemini-3.5-flash-lite</code>. You can override this in <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">.env.local</code> by setting <code style="background:#F4F4F5;padding:2px 6px;border-radius:4px;font-family:monospace">GEMMA_MODEL=your-model-id</code>. Use the AI connection test to verify your model is accessible.',
@@ -258,6 +263,12 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
               <span style={{ background: 'var(--primary)', color: '#fff', width: '1.5rem', height: '1.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, marginTop: '1px' }}>4</span>
               <div>Click "Test AI Connection" above to verify everything works.</div>
+            </div>
+            <div className="alert alert-info" style={{ marginTop: '0.25rem' }}>
+              <Info size={16} style={{ flexShrink: 0 }} />
+              <div>
+                <strong>Deploying on Vercel?</strong> Add <code>GEMINI_API_KEY</code> under your Vercel project&apos;s <strong>Settings → Environment Variables</strong>, select Production (and Preview if required), save, then redeploy. The local <code>.env.local</code> file is not deployed.
+              </div>
             </div>
           </div>
         </div>

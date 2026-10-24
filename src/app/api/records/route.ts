@@ -34,6 +34,9 @@ export async function POST(request: Request) {
     const { draft } = parsed.data;
 
     const record = createRecord({
+      transactionType: draft.transactionType ?? 'other',
+      amountPaid: draft.amountPaid ?? 0,
+      quantity: draft.quantity ?? null,
       customer: draft.customer,
       task: draft.task,
       amount: draft.amount,

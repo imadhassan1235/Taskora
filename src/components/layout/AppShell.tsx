@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Sparkles,
   FileText,
+  BarChart3,
   Settings,
   Menu,
   X,
@@ -18,6 +19,7 @@ const navItems = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
   { href: '/workspace', label: 'AI Workspace', icon: Sparkles },
   { href: '/records', label: 'Saved Records', icon: FileText },
+  { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/chat', label: 'AI Assistant', icon: MessageSquare },
   { href: '/settings', label: 'Settings & Help', icon: Settings },
 ];

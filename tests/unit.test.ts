@@ -5,6 +5,8 @@ import {
   BusinessRecordSchema,
   SaveRequestSchema,
 } from '@/lib/validation/schemas';
+import { buildReportSummary } from '@/lib/reports';
+import type { BusinessRecord } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Schema Validation Tests
@@ -270,6 +272,21 @@ describe('SaveRequestSchema', () => {
     expect(SaveRequestSchema.safeParse({ draft: validDraft }).success).toBe(true);
   });
 
+  it('accepts transaction, paid amount, and quantity fields', () => {
+    expect(SaveRequestSchema.safeParse({
+      draft: { ...validDraft, transactionType: 'purchase', amountPaid: 5000, quantity: 12 },
+    }).success).toBe(true);
+  });
+
+  it('rejects negative paid amounts and quantities', () => {
+    expect(SaveRequestSchema.safeParse({
+      draft: { ...validDraft, amountPaid: -1 },
+    }).success).toBe(false);
+    expect(SaveRequestSchema.safeParse({
+      draft: { ...validDraft, quantity: -1 },
+    }).success).toBe(false);
+  });
+
   it('rejects save request with empty originalMessage', () => {
     const result = SaveRequestSchema.safeParse({
       draft: { ...validDraft, originalMessage: '' },
@@ -298,5 +315,80 @@ describe('SaveRequestSchema', () => {
       },
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('Business report summary', () => {
+  function makeRecord(overrides: Partial<BusinessRecord>): BusinessRecord {
+    return {
+      id: 'record',
+      transactionType: 'other',
+      amountPaid: 0,
+      quantity: null,
+      customer: null,
+      task: null,
+      amount: null,
+      currency: null,
+      dueDate: null,
+      dueDateRaw: null,
+      notes: null,
+      originalMessage: 'A business record',
+      language: 'English',
+      confidence: 'high',
+      uncertain: [],
+      status: 'saved',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      ...overrides,
+    };
+  }
+
+  it('separates sales and purchase balances by currency and calculates stock', () => {
+    const report = buildReportSummary([
+      makeRecord({
+        id: 'purchase',
+        transactionType: 'purchase',
+        task: 'Rice',
+        amount: 10000,
+        amountPaid: 6000,
+        quantity: 50,
+        currency: 'PKR',
+      }),
+      makeRecord({
+        id: 'sale',
+        transactionType: 'sale',
+        task: ' rice ',
+        amount: 3000,
+        amountPaid: 1000,
+        quantity: 12,
+        currency: 'pkr',
+        createdAt: '2026-01-02T00:00:00.000Z',
+      }),
+      makeRecord({
+        id: 'usd-sale',
+        transactionType: 'sale',
+        amount: 20,
+        amountPaid: 20,
+        currency: 'USD',
+      }),
+      makeRecord({ id: 'draft', transactionType: 'purchase', status: 'draft', amount: 500 }),
+      makeRecord({ id: 'legacy', amount: 9000 }),
+    ]);
+
+    expect(report.savedRecordCount).toBe(4);
+    expect(report.transactions.map((record) => record.id)).toEqual(['sale', 'purchase', 'usd-sale']);
+    expect(report.currencies).toEqual([
+      { currency: 'PKR', sales: 3000, received: 1000, receivable: 2000, purchases: 10000, paidToSuppliers: 6000, payable: 4000 },
+      { currency: 'USD', sales: 20, received: 20, receivable: 0, purchases: 0, paidToSuppliers: 0, payable: 0 },
+    ]);
+    expect(report.inventory).toEqual([{ item: 'Rice', purchased: 50, sold: 12, remaining: 38 }]);
+  });
+
+  it('keeps a sale without a recorded purchase visible as negative stock', () => {
+    const report = buildReportSummary([
+      makeRecord({ transactionType: 'sale', task: 'Widget', quantity: 3 }),
+    ]);
+
+    expect(report.inventory[0].remaining).toBe(-3);
   });
 });

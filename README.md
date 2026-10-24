@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Business Reports
+
+Create or edit a record in the AI Workspace or Saved Records and choose **Sale** or **Bulk Purchase / Stock In**. Enter the full transaction amount, the amount already received or paid, the item/work name, and its quantity. The **Reports** page shows customer receivables, supplier payables, and printable transaction and stock summaries. Stock is calculated as recorded purchases minus recorded sales for matching item names; older records remain classified as **Other** until edited.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

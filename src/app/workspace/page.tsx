@@ -16,7 +16,7 @@ import {
   FileText,
   Info,
 } from 'lucide-react';
-import type { ExtractedDraft, Language } from '@/types';
+import type { BusinessTransactionType, ExtractedDraft, Language } from '@/types';
 
 const EXAMPLE_MESSAGES = {
   english: 'Ali ordered 3 website designs for PKR 15,000. Delivery is due Friday.',
@@ -57,6 +57,9 @@ export default function WorkspacePage() {
   const [extractStatus, setExtractStatus] = useState<ExtractionStatus>('idle');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [draft, setDraft] = useState<ExtractedDraft | null>(null);
+  const [transactionType, setTransactionType] = useState<BusinessTransactionType>('other');
+  const [amountPaid, setAmountPaid] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [saveErrorMsg, setSaveErrorMsg] = useState('');
   const [savedRecordId, setSavedRecordId] = useState<string | null>(null);
@@ -70,6 +73,9 @@ export default function WorkspacePage() {
     setLanguage(type === 'english' ? 'english' : type === 'urdu' ? 'urdu' : 'roman-urdu');
     setExtractStatus('idle');
     setDraft(null);
+    setTransactionType('other');
+    setAmountPaid('');
+    setQuantity('');
     setErrorMsg('');
     setSaveStatus('idle');
     setSavedRecordId(null);
@@ -82,6 +88,9 @@ export default function WorkspacePage() {
     setExtractStatus('loading');
     setErrorMsg('');
     setDraft(null);
+    setTransactionType('other');
+    setAmountPaid('');
+    setQuantity('');
     setSaveStatus('idle');
     setSavedRecordId(null);
 
@@ -136,7 +145,14 @@ export default function WorkspacePage() {
       const res = await fetch('/api/records', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ draft }),
+        body: JSON.stringify({
+          draft: {
+            ...draft,
+            transactionType,
+            amountPaid: amountPaid === '' ? 0 : Number(amountPaid),
+            quantity: quantity === '' ? null : Number(quantity),
+          },
+        }),
       });
       const data = await res.json();
 
@@ -358,6 +374,63 @@ export default function WorkspacePage() {
               )}
 
               {/* Editable fields */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '1rem',
+                  marginBottom: '1rem',
+                  padding: '1rem',
+                  background: 'var(--bg-main)',
+                  borderRadius: 'var(--radius)',
+                }}
+              >
+                <div>
+                  <label className="form-label" htmlFor="transaction-type">Record Type</label>
+                  <select
+                    id="transaction-type"
+                    className="form-input form-select"
+                    value={transactionType}
+                    onChange={(e) => setTransactionType(e.target.value as BusinessTransactionType)}
+                  >
+                    <option value="other">Other / Service</option>
+                    <option value="sale">Sale</option>
+                    <option value="purchase">Bulk Purchase / Stock In</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="amount-paid">Amount Received / Paid</label>
+                  <input
+                    id="amount-paid"
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0"
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="form-label" htmlFor="quantity">
+                    Quantity {transactionType === 'purchase' ? 'Purchased' : transactionType === 'sale' ? 'Sold' : ''}
+                  </label>
+                  <input
+                    id="quantity"
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="Optional"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                </div>
+                <p style={{ gridColumn: '1 / -1', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                  Amount is the full sale or purchase total. Enter the amount already received or paid; the pending balance is calculated in Reports. Use the task/item name consistently to track stock.
+                </p>
+              </div>
+
               <div
                 style={{
                   display: 'grid',
